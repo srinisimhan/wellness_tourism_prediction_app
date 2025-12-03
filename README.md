@@ -1,0 +1,1 @@
+# wellness_tourism_prediction_app
