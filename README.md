@@ -38,8 +38,7 @@ wellness_tourism_prediction_app/
 │ │ └── hosting.py                          # Deployment to HF Spaces
 │ ├── artifacts/                            # Model Artifacts
 │ │ └── best_wellness_tourism_model.joblib
-│ └── requirements.txt                      # Project dependencies
-├── requirements.txt                        # GitHub Actions dependencies
+│ └── requirements.txt                      # GitHub Actions dependencies
 └── README.md                               # Project documentation
 ```
 
