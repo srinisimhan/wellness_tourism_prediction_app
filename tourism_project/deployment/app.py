@@ -13,7 +13,7 @@ st.set_page_config(
 
 st.title("🏖️ Wellness Tourism Prediction App")
 st.markdown("""
-This application predicts whether a customer is likely to purchase a wellness tourism package 
+This application predicts whether a customer is likely to purchase a wellness tourism package
 based on their demographic, behavioral, and engagement data.
 """)
 
@@ -25,13 +25,13 @@ with st.sidebar:
     - Algorithm: XGBoost Classifier
     - Trained on: Wellness Tourism Dataset
     - Target: Product Taken (1 = Purchased, 0 = Not Purchased)
-    
+
     **Key Features:**
     - Handles class imbalance with scale_pos_weight
     - Uses preprocessing pipeline (scaling + encoding)
     - Optimized for ROC-AUC score
     """)
-    
+
     # Display model metrics from your training
     st.subheader("Model Performance")
     st.metric("ROC AUC", "0.9414")
@@ -140,10 +140,10 @@ if st.button("Predict Purchase Probability", type="primary", use_container_width
             # Make prediction
             prediction_proba = model.predict_proba(input_data)[0]
             prediction_class = model.predict(input_data)[0]
-            
+
             # Display results
             col_result1, col_result2 = st.columns(2)
-            
+
             with col_result1:
                 st.subheader("Prediction Result")
                 if prediction_class == 1:
@@ -151,23 +151,23 @@ if st.button("Predict Purchase Probability", type="primary", use_container_width
                     st.balloons()
                 else:
                     st.info("❌ **Customer is UNLIKELY to purchase**")
-            
+
             with col_result2:
                 st.subheader("Probability Scores")
                 # Create gauge-like visualization
                 prob_purchase = prediction_proba[1] * 100
                 prob_no_purchase = prediction_proba[0] * 100
-                
+
                 st.metric("Probability of Purchase", f"{prob_purchase:.1f}%")
                 st.metric("Probability of No Purchase", f"{prob_no_purchase:.1f}%")
-                
+
                 # Visual progress bar
                 st.progress(int(prob_purchase))
                 st.caption(f"Confidence: {prob_purchase:.1f}%")
-            
+
             # Business insights
             st.subheader("📊 Business Insights")
-            
+
             if prediction_class == 1:
                 if prob_purchase > 80:
                     st.success("**High Confidence Lead** - Consider offering premium packages")
@@ -175,7 +175,7 @@ if st.button("Predict Purchase Probability", type="primary", use_container_width
                     st.warning("**Medium Confidence Lead** - Standard follow-up recommended")
                 else:
                     st.info("**Low Confidence Lead** - May require additional engagement")
-                
+
                 st.markdown("""
                 **Recommended Actions:**
                 - Schedule follow-up call within 48 hours
@@ -189,7 +189,7 @@ if st.button("Predict Purchase Probability", type="primary", use_container_width
                 - Collect feedback on pitch satisfaction
                 - Update marketing materials for similar profiles
                 """)
-                
+
         except Exception as e:
             st.error(f"Error making prediction: {e}")
 
@@ -205,14 +205,14 @@ with st.expander("ℹ️ Model Information"):
         - learning_rate: 0.1
         - colsample_bytree: 0.6
         - reg_lambda: 0.5
-    
+
     **Training Performance:**
     - ROC AUC: 0.9414
     - PR AUC: 0.8344
     - Test Accuracy: 0.8898
     - Precision (Class 1): 0.69
     - Recall (Class 1): 0.79
-    
+
     **Note:** Class 1 represents customers who purchased the wellness tourism package.
     """)
 

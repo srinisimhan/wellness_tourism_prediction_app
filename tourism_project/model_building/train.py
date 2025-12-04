@@ -131,15 +131,15 @@ with mlflow.start_run():
         param_set = results['params'][i]
         mean_score = results['mean_test_score'][i]
         std_score = results['std_test_score'][i]
-        
+
         # Logging each combination as a separate MLflow run
         with mlflow.start_run(nested=True):
             mlflow.log_params(param_set)
             mlflow.log_metric("mean_cv_score", mean_score)
             mlflow.log_metric("std_cv_score", std_score)
-    
+
     print(f"✅ Successfully logged all {len(results['params'])} parameter combinations")
-    
+
     # Logging best parameters in main run
     mlflow.log_params(grid_search.best_params_)
 
