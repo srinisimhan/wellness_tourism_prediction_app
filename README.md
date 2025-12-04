@@ -14,6 +14,7 @@ The dataset contains 4,888 customer records with 20 features including:
 - **Target variable**: `ProdTaken` (0 = Not Purchased, 1 = Purchased)
 
 ## Project Architecture
+```
 wellness_tourism_prediction_app/
 ├── .github/workflows/
 │   └── pipeline.yml                    # CI/CD Pipeline
@@ -32,9 +33,9 @@ wellness_tourism_prediction_app/
 │   └── artifacts/                     # Model artifacts
 ├── requirements.txt                    # Project dependencies
 └── README.md                          # This file
+```
 
-
-## 🚀 Live Deployments
+## Live Deployments
 
 ### **Hugging Face Spaces**
 - **Application**: [Wellness Tourism Prediction App](https://huggingface.co/spaces/simnid/Wellness-Tourism-Prediction)
@@ -45,7 +46,7 @@ wellness_tourism_prediction_app/
 - **Tracking Server**: MLflow UI with ngrok tunnel
 - **Experiment**: `wellness-tourism-prod-experiment`
 
-## ⚙️ Technical Implementation
+## Technical Implementation
 
 ### **1. Data Pipeline**
 - **Data Registration**: Automated upload to Hugging Face Hub
@@ -79,7 +80,7 @@ wellness_tourism_prediction_app/
 - **Hosting**: Hugging Face Spaces
 - **API**: Direct model loading from HF Hub
 
-## 📈 Model Performance
+## Model Performance
 
 | Metric | Value |
 |--------|-------|
@@ -112,6 +113,18 @@ The GitHub Actions workflow (`.github/workflows/pipeline.yml`) automates:
 - Git
 - Hugging Face Account with write token
 
+### **Setup**
+```bash
+# Clone repository
+git clone https://github.com/srinisimhan/wellness_tourism_prediction_app.git
+cd wellness_tourism_prediction_app
+
+# Install dependencies
+pip install -r requirements.txt
+```
+# Set environment variables
+export HF_TOKEN="your_huggingface_token"
+export MLFLOW_TRACKING_URI="http://localhost:5000"
 
 ## Using the Application
 - **Access the web app:** Visit the Hugging Face Space link
@@ -135,4 +148,27 @@ The CI/CD pipeline automatically retrains the model when:
 - Code changes are pushed to the main branch
 - Scheduled retraining (can be configured)
 
+## Troubleshooting
+### Common Issues
+1. HF_TOKEN errors: Ensure token has write permissions
+2. MLflow connection issues: Check ngrok tunnel is active
+3. Model loading failures: Verify model file exists in HF Hub
+4. Streamlit app crashes: Check dependency versions
+
+### Debug Steps
+```bash
+# Test Hugging Face connection
+python -c "from huggingface_hub import HfApi; api = HfApi(); print('Connected')"
+
+# Test model loading
+python -c "from huggingface_hub import hf_hub_download; import joblib; print('HF accessible')"
+
+# Test Streamlit locally
+streamlit run tourism_project/deployment/app.py --server.port 8501
+```
+
 ## References
+- [Hugging Face Hub Documentation](https://huggingface.co/docs/hub/index)
+- [MLflow Documentation](https://mlflow.org/docs/latest/index.html)
+- [Streamlit Documentation](https://docs.streamlit.io/)
+- [XGBoost Documentation](https://xgboost.readthedocs.io/)
