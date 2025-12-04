@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # Install Python dependencies
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r tourism_project/requirements.txt
 
 # Create a non-root user for security
 RUN useradd -m -u 1000 user
