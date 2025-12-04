@@ -17,22 +17,30 @@ The dataset contains 4,888 customer records with 20 features including:
 ```
 wellness_tourism_prediction_app/
 ├── .github/workflows/
-│   └── pipeline.yml                    # CI/CD Pipeline
-├── tourism_project/
-│   ├── data/                           # Dataset files
-│   ├── model_building/
-│   │   ├── data_register.py           # Dataset registration
-│   │   ├── prep.py                    # Data preprocessing
-│   │   └── train.py                   # Model training
-│   ├── deployment/
-│   │   ├── app.py                     # Streamlit application
-│   │   ├── Dockerfile                 # Container config
-│   │   └── requirements.txt           # Dependencies
-│   ├── hosting/
-│   │   └── hosting.py                 # Deployment script
-│   └── artifacts/                     # Model artifacts
-├── requirements.txt                    # Project dependencies
-└── README.md                          # This file
+│ └── pipeline.yml                          # CI/CD Pipeline Configuration
+├── tourism_project/                        # Main Project Directory
+│ ├── data/                                 # Raw and processed datasets
+│ │ ├── tourism.csv                         # Original dataset
+│ │ ├── Xtrain.csv                          # Training features
+│ │ ├── Xtest.csv                           # Testing features
+│ │ ├── ytrain.csv                          # Training labels
+│ │ └── ytest.csv                           # Testing labels
+│ ├── data_downloaded/                      # Downloaded datasets from HF
+│ ├── model_building/                       # ML Pipeline Scripts
+│ │ ├── data_register.py                    # Dataset registration to HF
+│ │ ├── prep.py                             # Data preprocessing
+│ │ └── train.py                            # Model training with MLflow
+│ ├── deployment/                           # Deployment Files
+│ │ ├── app.py                              # Streamlit application
+│ │ ├── Dockerfile                          # Container configuration
+│ │ └── requirements.txt                    # Deployment dependencies
+│ ├── hosting/                              # Hosting Scripts
+│ │ └── hosting.py                          # Deployment to HF Spaces
+│ ├── artifacts/                            # Model Artifacts
+│ │ └── best_wellness_tourism_model.joblib
+│ └── requirements.txt                      # Project dependencies
+├── requirements.txt                        # GitHub Actions dependencies
+└── README.md                               # Project documentation
 ```
 
 ## Live Deployments
