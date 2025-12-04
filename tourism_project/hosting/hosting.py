@@ -12,5 +12,5 @@ api.upload_folder(
     folder_path="tourism_project/deployment",
     repo_id="simnid/Wellness-Tourism-Prediction",
     repo_type="space",
-    path_in_repo="tourism_project/deployment",
+    path_in_repo="",
 )
