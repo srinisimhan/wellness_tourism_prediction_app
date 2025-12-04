@@ -121,10 +121,11 @@ cd wellness_tourism_prediction_app
 
 # Install dependencies
 pip install -r requirements.txt
-```
+
 # Set environment variables
 export HF_TOKEN="your_huggingface_token"
 export MLFLOW_TRACKING_URI="http://localhost:5000"
+```
 
 ## Using the Application
 - **Access the web app:** Visit the Hugging Face Space link
