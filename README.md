@@ -25,7 +25,6 @@ wellness_tourism_prediction_app/
 │ │ ├── Xtest.csv                           # Testing features
 │ │ ├── ytrain.csv                          # Training labels
 │ │ └── ytest.csv                           # Testing labels
-│ ├── data_downloaded/                      # Downloaded datasets from HF
 │ ├── model_building/                       # ML Pipeline Scripts
 │ │ ├── data_register.py                    # Dataset registration to HF
 │ │ ├── prep.py                             # Data preprocessing
