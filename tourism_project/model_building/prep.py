@@ -40,14 +40,6 @@ if "Gender" in df.columns:
 # Feature engineering
 df["PitchEfficiency"] = df["PitchSatisfactionScore"] * df["DurationOfPitch"]
 
-# Encode categorical variables
-cat_cols = df.select_dtypes(include="object").columns
-label_encoders = {}
-
-for col in cat_cols:
-    le = LabelEncoder()
-    df[col] = le.fit_transform(df[col].astype(str))
-    label_encoders[col] = le
 
 # identifying the target variable
 target = "ProdTaken"
@@ -79,5 +71,3 @@ for file_name in files:
         repo_type="dataset"
     )
     print(f"Uploaded {file_name} to {DATA_REPO_ID}")
-
-print("✔ All processed files uploaded successfully.")

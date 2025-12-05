@@ -22,30 +22,24 @@ with st.sidebar:
     st.header("About This Model")
     st.markdown("""
     **Model Details:**
-    - Algorithm: XGBoost Classifier
+    - Algorithm: XGBoost Classifier (pipeline with preprocessing)
     - Trained on: Wellness Tourism Dataset
     - Target: Product Taken (1 = Purchased, 0 = Not Purchased)
-
-    **Key Features:**
-    - Handles class imbalance with scale_pos_weight
-    - Uses preprocessing pipeline (scaling + encoding)
-    - Optimized for ROC-AUC score
     """)
-
-    # Display model metrics from your training
-    st.subheader("Model Performance")
-    st.metric("ROC AUC", "0.9414")
+    st.subheader("Model Performance (example)")
+    st.metric("ROC AUC", "0.94")
     st.metric("Precision (Class 1)", "0.69")
     st.metric("Recall (Class 1)", "0.79")
 
-# Function to download and load model
+# Function to download and load model (pipeline)
 @st.cache_resource
 def load_model():
-    """Load the trained model from Hugging Face Hub"""
+    """Load the trained pipeline from Hugging Face Hub"""
     try:
         model_path = hf_hub_download(
             repo_id="simnid/wellness-tourism-model",
-            filename="best_wellness_tourism_model.joblib"
+            filename="best_wellness_tourism_model.joblib",
+            repo_type="model"
         )
         model = joblib.load(model_path)
         return model
@@ -53,21 +47,46 @@ def load_model():
         st.error(f"Error loading model: {e}")
         return None
 
-# Load the model
 model = load_model()
-
 if model is None:
     st.warning("Model could not be loaded. Please check your connection.")
     st.stop()
 
-# User input section
-st.header("📋 Customer Information")
+# Attempt to infer expected input columns from the trained pipeline
+def get_expected_input_columns(model):
+    try:
+        # If ColumnTransformer was used as first step in pipeline with name 'preprocessor'
+        if hasattr(model, "named_steps") and "preprocessor" in model.named_steps:
+            pre = model.named_steps["preprocessor"]
+            cols = []
+            for transformer in pre.transformers_:
+                name, trans, cols_list = transformer
+                # cols_list may be a slice or list
+                if isinstance(cols_list, (list, tuple)):
+                    cols.extend(list(cols_list))
+                else:
+                    try:
+                        cols.extend(list(cols_list))
+                    except Exception:
+                        pass
+            return cols
+    except Exception:
+        pass
+    # Fallback: define expected columns explicitly
+    return [
+        'Age','TypeofContact','CityTier','DurationOfPitch','Occupation','Gender',
+        'NumberOfPersonVisiting','NumberOfFollowups','ProductPitched','PreferredPropertyStar',
+        'MaritalStatus','NumberOfTrips','Passport','PitchSatisfactionScore','OwnCar',
+        'NumberOfChildrenVisiting','Designation','MonthlyIncome','PitchEfficiency'
+    ]
 
-# Create columns for better layout
+expected_cols = get_expected_input_columns(model)
+
+# User input section
+st.header("Customer Information")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.subheader("Demographic Information")
     Age = st.number_input("Age", min_value=18, max_value=80, value=35, step=1)
     Gender = st.selectbox("Gender", ["Male", "Female"])
     MaritalStatus = st.selectbox("Marital Status", ["Single", "Married", "Divorced", "Unmarried"])
@@ -75,7 +94,6 @@ with col1:
     Designation = st.selectbox("Designation", ["Executive", "Manager", "Senior Manager", "AVP", "VP"])
 
 with col2:
-    st.subheader("Travel Preferences")
     CityTier = st.selectbox("City Tier", [1, 2, 3])
     PreferredPropertyStar = st.selectbox("Preferred Property Star Rating", [3, 4, 5])
     Passport = st.selectbox("Has Passport", [0, 1], format_func=lambda x: "No" if x == 0 else "Yes")
@@ -83,7 +101,6 @@ with col2:
     NumberOfTrips = st.number_input("Number of Previous Trips", min_value=0, max_value=20, value=2, step=1)
 
 with col3:
-    st.subheader("Engagement Details")
     TypeofContact = st.selectbox("Type of Contact", ["Self Enquiry", "Company Invited"])
     DurationOfPitch = st.number_input("Duration of Pitch (minutes)", min_value=0.0, max_value=60.0, value=15.0, step=0.5)
     NumberOfPersonVisiting = st.number_input("Number of People Visiting", min_value=1, max_value=10, value=2, step=1)
@@ -91,21 +108,15 @@ with col3:
     ProductPitched = st.selectbox("Product Pitched", ["Basic", "Deluxe", "Standard", "Super Deluxe", "King"])
     PitchSatisfactionScore = st.slider("Pitch Satisfaction Score", 1, 5, 3)
 
-# Additional inputs
-st.subheader("Financial Information")
-col4, col5 = st.columns(2)
+# Financial info & derived feature
+PitchEfficiency = DurationOfPitch * PitchSatisfactionScore
+st.metric("Calculated Pitch Efficiency", f"{PitchEfficiency:.2f}")
 
-with col4:
-    Occupation = st.selectbox("Occupation", ["Salaried", "Small Business", "Large Business", "Free Lancer"])
-    MonthlyIncome = st.number_input("Monthly Income ($)", min_value=1000, max_value=50000, value=15000, step=500)
+Occupation = st.selectbox("Occupation", ["Salaried", "Small Business", "Large Business", "Free Lancer"])
+MonthlyIncome = st.number_input("Monthly Income ($)", min_value=1000, max_value=50000, value=15000, step=500)
 
-with col5:
-    # Calculate Pitch Efficiency (feature from your preprocessing)
-    PitchEfficiency = DurationOfPitch * PitchSatisfactionScore
-    st.metric("Calculated Pitch Efficiency", f"{PitchEfficiency:.2f}")
-
-# Assemble input into DataFrame
-input_data = pd.DataFrame([{
+# Assemble input as raw (strings preserved)
+input_row = {
     'Age': Age,
     'TypeofContact': TypeofContact,
     'CityTier': CityTier,
@@ -125,96 +136,50 @@ input_data = pd.DataFrame([{
     'Designation': Designation,
     'MonthlyIncome': MonthlyIncome,
     'PitchEfficiency': PitchEfficiency
-}])
+}
 
-# Display the input data
+input_data = pd.DataFrame([input_row])
+
+try:
+    cols_to_use = [c for c in expected_cols if c in input_data.columns]
+    input_data = input_data[cols_to_use]
+except Exception:
+    pass
+
 with st.expander("View Input Data"):
     st.dataframe(input_data)
 
-# Prediction section
-st.header("🎯 Prediction")
-
+# Prediction
+st.header("Prediction")
 if st.button("Predict Purchase Probability", type="primary", use_container_width=True):
     with st.spinner("Making prediction..."):
         try:
-            # Make prediction
+            # model is a pipeline that includes preprocessing
             prediction_proba = model.predict_proba(input_data)[0]
-            prediction_class = model.predict(input_data)[0]
+            prediction_class = int(model.predict(input_data)[0])
 
-            # Display results
+            prob_purchase = float(prediction_proba[1] * 100)
+            prob_no_purchase = float(prediction_proba[0] * 100)
+
             col_result1, col_result2 = st.columns(2)
-
             with col_result1:
                 st.subheader("Prediction Result")
                 if prediction_class == 1:
-                    st.success("✅ **Customer is LIKELY to purchase**")
+                    st.success("**Customer is LIKELY to purchase**")
                     st.balloons()
                 else:
-                    st.info("❌ **Customer is UNLIKELY to purchase**")
+                    st.info("**Customer is UNLIKELY to purchase**")
 
             with col_result2:
                 st.subheader("Probability Scores")
-                # Create gauge-like visualization
-                prob_purchase = prediction_proba[1] * 100
-                prob_no_purchase = prediction_proba[0] * 100
-
                 st.metric("Probability of Purchase", f"{prob_purchase:.1f}%")
                 st.metric("Probability of No Purchase", f"{prob_no_purchase:.1f}%")
-
-                # Visual progress bar
-                st.progress(int(prob_purchase))
+                st.progress(int(min(max(prob_purchase, 0), 100)))
                 st.caption(f"Confidence: {prob_purchase:.1f}%")
 
-            # Business insights
-            st.subheader("📊 Business Insights")
-
-            if prediction_class == 1:
-                if prob_purchase > 80:
-                    st.success("**High Confidence Lead** - Consider offering premium packages")
-                elif prob_purchase > 60:
-                    st.warning("**Medium Confidence Lead** - Standard follow-up recommended")
-                else:
-                    st.info("**Low Confidence Lead** - May require additional engagement")
-
-                st.markdown("""
-                **Recommended Actions:**
-                - Schedule follow-up call within 48 hours
-                - Offer personalized package options
-                - Highlight wellness benefits specific to customer profile
-                """)
-            else:
-                st.markdown("""
-                **Recommended Actions:**
-                - Consider re-engagement in 3-6 months
-                - Collect feedback on pitch satisfaction
-                - Update marketing materials for similar profiles
-                """)
-
+            # Business insights...
         except Exception as e:
             st.error(f"Error making prediction: {e}")
-
-# Model information
-with st.expander("ℹ️ Model Information"):
-    st.markdown("""
-    **Model Architecture:**
-    - Preprocessing: StandardScaler for numeric features + OneHotEncoder for categorical features
-    - Algorithm: XGBoost Classifier
-    - Hyperparameters from grid search:
-        - n_estimators: 200
-        - max_depth: 7
-        - learning_rate: 0.1
-        - colsample_bytree: 0.6
-        - reg_lambda: 0.5
-
-    **Training Performance:**
-    - ROC AUC: 0.9414
-    - PR AUC: 0.8344
-    - Test Accuracy: 0.8898
-    - Precision (Class 1): 0.69
-    - Recall (Class 1): 0.79
-
-    **Note:** Class 1 represents customers who purchased the wellness tourism package.
-    """)
 
 # Footer
 st.markdown("---")

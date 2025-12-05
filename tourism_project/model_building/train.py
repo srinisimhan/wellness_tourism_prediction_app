@@ -1,6 +1,7 @@
 # for data manipulation
 import pandas as pd
 import numpy as np
+
 # for model training, tuning, and evaluation
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import make_column_transformer
@@ -8,10 +9,13 @@ from sklearn.pipeline import make_pipeline
 import xgboost as xgb
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.metrics import accuracy_score, classification_report, recall_score, roc_auc_score, precision_recall_curve, auc
+
 # for model serialization
 import joblib
+
 # for creating a folder
 import os
+
 # for hugging face space authentication to upload files
 from huggingface_hub import HfApi, create_repo, hf_hub_download
 from huggingface_hub.utils import RepositoryNotFoundError
@@ -19,9 +23,11 @@ import mlflow
 
 # Get tokens from environment
 HF_TOKEN = os.getenv("HF_TOKEN")
-# Strip any potential whitespace from the token
+
+# Strip any potential whitespace from the token before check
 if HF_TOKEN:
     HF_TOKEN = HF_TOKEN.strip()
+
 if not HF_TOKEN:
     raise EnvironmentError("HF_TOKEN environment variable not set!")
 
@@ -32,21 +38,25 @@ MODEL_REPO_ID = "simnid/wellness-tourism-model"
 # mlflow setup
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
+# Ensuring experiment is created if not present
 mlflow.set_experiment("wellness-tourism-prod-experiment")
 
 # inititalizing client
 api = HfApi(token=HF_TOKEN)
 
 # Define local directory for downloaded data
-local_data_dir = "tourism_project/data_downloaded"
+local_data_dir = "tourism_project/data"
 os.makedirs(local_data_dir, exist_ok=True)
 
 # Function to download and load data
 def download_and_load_csv(filename, repo_id, local_dir, repo_type="dataset"):
     local_file_path = os.path.join(local_dir, filename)
+    # Adding explicit download overwrite protection
     if not os.path.exists(local_file_path):
         print(f"Downloading {filename} from {repo_id}...")
         hf_hub_download(repo_id=repo_id, filename=filename, local_dir=local_dir, repo_type=repo_type, token=HF_TOKEN)
+
     return pd.read_csv(local_file_path)
 
 # Loading datasets from Hugging Face dataset
@@ -64,7 +74,7 @@ print(f"Test shapes: X={Xtest.shape}, y={ytest.shape}")
 num_cols = Xtrain.select_dtypes(include=[np.number]).columns.tolist()
 cat_cols = Xtrain.select_dtypes(exclude=[np.number]).columns.tolist()
 
-# Move specific numeric columns to categorical
+# Ensuring categorical reassignment is consistent
 for col in ["CityTier", "PreferredPropertyStar", "Passport", "OwnCar"]:
     if col in num_cols:
         num_cols.remove(col)
@@ -98,13 +108,13 @@ xgb_model = xgb.XGBClassifier(
 
 model_pipeline = make_pipeline(preprocessor, xgb_model)
 
-# Parameter Grid - Reduced.
+# Parameter Grid
 param_grid = {
-    'xgbclassifier__n_estimators': [100, 200],           # Keep 2 (most important)
-    'xgbclassifier__max_depth': [5, 7],                  # Keep 2 (3,5,7 -> 5,7)
-    'xgbclassifier__learning_rate': [0.01, 0.05, 0.1],   # Keep 3 (very important)
-    'xgbclassifier__colsample_bytree': [0.8],            # Reduce to 1 (0.8 usually best)
-    'xgbclassifier__reg_lambda': [1.0]                   # Reduce to 1 (1.0 is default)
+    'xgbclassifier__n_estimators': [100, 200],
+    'xgbclassifier__max_depth': [5, 7],
+    'xgbclassifier__learning_rate': [0.01, 0.05, 0.1],
+    'xgbclassifier__colsample_bytree': [0.8],
+    'xgbclassifier__reg_lambda': [1.0]
 }
 
 # Starting MLflow run
@@ -138,7 +148,7 @@ with mlflow.start_run():
             mlflow.log_metric("mean_cv_score", mean_score)
             mlflow.log_metric("std_cv_score", std_score)
 
-    print(f"✅ Successfully logged all {len(results['params'])} parameter combinations")
+    print(f"Successfully logged all {len(results['params'])} parameter combinations")
 
     # Logging best parameters in main run
     mlflow.log_params(grid_search.best_params_)
@@ -200,7 +210,7 @@ with mlflow.start_run():
         repo_id=MODEL_REPO_ID,
         repo_type="model"
     )
-    print(f"✅ Model uploaded successfully to Hugging Face: {MODEL_REPO_ID}")
+    print(f" Model uploaded successfully to Hugging Face: {MODEL_REPO_ID}")
 
     # Summary
     print(f"Best Model ROC AUC: {roc_auc:.4f}")
