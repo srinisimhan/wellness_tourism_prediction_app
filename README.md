@@ -1,7 +1,8 @@
 # Wellness Tourism Prediction - MLOps Pipeline
 
 ## Project Overview
-This project implements a complete MLOps pipeline for predicting customer purchases of wellness tourism packages. The system automates data preprocessing, model training, experimentation tracking, and deployment using Hugging Face Spaces with CI/CD via GitHub Actions.
+This project implements a complete MLOps pipeline for predicting customer purchases of wellness tourism packages. The system automates data preprocessing, model training, experimentation tracking, bulk testing, and deployment using Hugging Face Spaces with CI/CD via GitHub Actions.
+
 
 ## Business Problem
 "Visit with Us" travel company needs to identify potential customers for their new Wellness Tourism Package. The manual approach is inefficient and error-prone. This solution provides an automated, data-driven system to predict customer purchase likelihood with 94% ROC AUC accuracy.
@@ -10,7 +11,7 @@ This project implements a complete MLOps pipeline for predicting customer purcha
 The dataset contains 4,888 customer records with 20 features including:
 - **Demographic information**: Age, Gender, Occupation, Monthly Income
 - **Travel preferences**: CityTier, PreferredPropertyStar, Passport ownership
-- **Engagement data**: DurationOfPitch, NumberOfFollowups, PitchSatisfactionScore
+- **Engagement data**: DurationOfPitch, NumberOfFollowups, PitchSatisfactionScore, PitchEfficiency (derived)
 - **Target variable**: `ProdTaken` (0 = Not Purchased, 1 = Purchased)
 
 ## Project Architecture
@@ -21,6 +22,7 @@ wellness_tourism_prediction_app/
 ├── tourism_project/                        # Main Project Directory
 │ ├── data/                                 # Raw and processed datasets
 │ │ ├── tourism.csv                         # Original dataset
+│ │ ├── bulk_test_sample.csv                # bulk upload test data
 │ │ ├── Xtrain.csv                          # Training features
 │ │ ├── Xtest.csv                           # Testing features
 │ │ ├── ytrain.csv                          # Training labels
@@ -47,6 +49,7 @@ wellness_tourism_prediction_app/
 - **Application**: [Wellness Tourism Prediction App](https://huggingface.co/spaces/simnid/Wellness-Tourism-Prediction)
 - **Model**: [wellness-tourism-model](https://huggingface.co/simnid/wellness-tourism-model)
 - **Dataset**: [wellness-tourism-dataset](https://huggingface.co/datasets/simnid/wellness-tourism-dataset)
+- **Bulk CSV Sample**: [bulk_test_sample.csv](https://huggingface.co/datasets/simnid/wellness-tourism-dataset/resolve/main/bulk_test_sample.csv)
 
 ### **MLflow Experiment Tracking**
 - **Tracking Server**: MLflow UI with ngrok tunnel
@@ -90,23 +93,26 @@ wellness_tourism_prediction_app/
 
 | Metric | Value |
 |--------|-------|
-| **ROC AUC** | 0.9414 |
-| **PR AUC** | 0.8344 |
-| **Accuracy** | 0.8898 |
-| **Precision (Class 1)** | 0.69 |
-| **Recall (Class 1)** | 0.79 |
-| **F1-Score (Class 1)** | 0.74 |
-| **Best Parameters** | n_estimators: 200, max_depth: 7, learning_rate: 0.1 |
+| **ROC AUC** | 0.9683 |
+| **PR AUC** | 0.9153 |
+| **Accuracy** | 0.9407 |
+| **Precision (Class 1)** | 0.867 |
+| **Recall (Class 1)** | 0.818 |
+| **F1-Score (Class 1)** | 0.841 |
+| **Best Parameters** | n_estimators: 200, max_depth: 7, learning_rate: 0.1
+
 
 ## CI/CD Pipeline
 
 The GitHub Actions workflow (`.github/workflows/pipeline.yml`) automates:
 
 1. **Register Dataset**: Upload raw data to Hugging Face
-2. **Data Preparation**: Clean, split, and process data
-3. **Model Training**: Train with hyperparameter tuning and MLflow tracking
-4. **Deploy to HF Space**: Deploy Streamlit app to Hugging Face
-5. **Run Tests**: Validate pipeline execution
+2. **Bulk CSV Creation & Upload**: Generates and uploads `bulk_test_sample.csv` to HF dataset
+3. **Data Preparation**: Clean, split, and process data
+4. **Model Training**: Train with hyperparameter tuning and MLflow tracking
+5. **Deploy to HF Space**: Deploy Streamlit app to Hugging Face
+6. **Run Tests**: Validate pipeline execution
+
 
 ### **Secrets Required**:
 - `HF_TOKEN`: Hugging Face authentication token
@@ -134,10 +140,10 @@ export MLFLOW_TRACKING_URI="http://localhost:5000"
 ```
 
 ## Using the Application
-- **Access the web app:** Visit the Hugging Face Space link
-- **Input customer details:** Fill in demographic, travel preferences, and engagement data
-- **Get predictions:** Click "Predict Purchase Probability"
-- **View insights:** See probability scores and business recommendations
+- **Single Prediction:** Input customer details and click "Predict Purchase Probability"  
+- **High-probability predictions:** Celebratory animation displayed when likelihood > 70%  
+- **Bulk CSV Prediction:** Upload CSV from `tourism_project/data/` or HF dataset  
+- **Download predictions:** Directly from the app for analysis
 
 ### Sample Prediction Inputs:
 - **High-probability customer:** Age 30-45, CityTier 2, Passport=1, PitchDuration > 20min
